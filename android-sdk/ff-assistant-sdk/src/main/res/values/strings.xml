@@ -1,0 +1,5 @@
+<resources>
+    <string name="assistant_title">FF Support Assistant</string>
+    <string name="issue_hint">Describe the issue</string>
+    <string name="send">Send</string>
+</resources>
