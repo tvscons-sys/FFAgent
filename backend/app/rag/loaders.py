@@ -2,9 +2,10 @@
 
 from pathlib import Path
 
-from langchain_community.document_loaders import Docx2txtLoader, PyPDFLoader, TextLoader
+from langchain_community.document_loaders import Docx2txtLoader, TextLoader
 from langchain_core.documents import Document
 from openpyxl import load_workbook
+from pypdf import PdfReader
 from pptx import Presentation
 
 SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".txt", ".md", ".xlsx", ".xlsm", ".pptx"}
@@ -21,8 +22,7 @@ def load_source_documents(data_dir: Path) -> list[Document]:
 def load_file(path: Path) -> list[Document]:
 	extension = path.suffix.lower()
 	if extension == ".pdf":
-		documents = PyPDFLoader(str(path)).load()
-		return [_add_common_metadata(document, path, "pdf") for document in documents]
+		return _load_pdf(path)
 	if extension == ".docx":
 		documents = Docx2txtLoader(str(path)).load()
 		return [_add_common_metadata(document, path, "docx") for document in documents]
@@ -37,8 +37,47 @@ def load_file(path: Path) -> list[Document]:
 
 
 def _add_common_metadata(document: Document, path: Path, document_type: str) -> Document:
-	document.metadata.update({"source": path.name, "source_path": str(path), "document_type": document_type})
+	document.metadata.update({
+		"source": path.name,
+		"source_path": path.name,
+		"document_type": document_type,
+	})
 	return document
+
+
+def _load_pdf(path: Path) -> list[Document]:
+	"""Load readable PDF pages independently so one malformed page does not stop ingestion."""
+	try:
+		reader = PdfReader(str(path), strict=False)
+	except Exception as error:
+		print(f"Warning: skipped unreadable PDF {path.name}: {error}")
+		return []
+	try:
+		pages = list(reader.pages)
+	except Exception as error:
+		print(f"Warning: skipped unreadable PDF {path.name}: {error}")
+		return []
+	documents: list[Document] = []
+	for page_number, page in enumerate(pages, start=1):
+		try:
+			text = (page.extract_text() or "").strip()
+		except Exception as error:
+			print(f"Warning: skipped unreadable PDF page {page_number} in {path.name}: {error}")
+			continue
+		if text:
+			documents.append(Document(
+				page_content=text,
+				metadata={
+					"source": path.name,
+					"source_path": path.name,
+					"document_type": "pdf",
+					"page_number": page_number,
+					"chunk_strategy": "pdf_page",
+				},
+			))
+	if not documents:
+		print(f"Warning: no readable text pages found in PDF {path.name}.")
+	return documents
 
 
 def _load_workbook(path: Path) -> list[Document]:
@@ -56,7 +95,7 @@ def _load_workbook(path: Path) -> list[Document]:
 				page_content=" | ".join(fields),
 				metadata={
 					"source": path.name,
-					"source_path": str(path),
+					"source_path": path.name,
 					"document_type": "spreadsheet",
 					"sheet_name": worksheet.title,
 					"row_number": row_number,
@@ -72,20 +111,26 @@ def _load_presentation(path: Path) -> list[Document]:
 	documents: list[Document] = []
 	for slide_number, slide in enumerate(presentation.slides, start=1):
 		text_parts: list[str] = []
+		slide_title = slide.shapes.title.text.strip() if slide.shapes.title else ""
 		for shape in slide.shapes:
-			if not shape.has_text_frame:
-				continue
-			text = shape.text.strip()
-			if text:
-				text_parts.append(text)
+			if shape.has_table:
+				for row in shape.table.rows:
+					cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+					if cells:
+						text_parts.append(" | ".join(cells))
+			elif shape.has_text_frame:
+				text = shape.text.strip()
+				if text and text not in text_parts:
+					text_parts.append(text)
 		if text_parts:
 			documents.append(Document(
 				page_content="\n".join(text_parts),
 				metadata={
 					"source": path.name,
-					"source_path": str(path),
+					"source_path": path.name,
 					"document_type": "presentation",
 					"slide_number": slide_number,
+					"slide_title": slide_title,
 					"chunk_strategy": "pptx_slide",
 				},
 			))
