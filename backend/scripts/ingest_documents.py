@@ -1,0 +1,1 @@
+"""Command-line entry point for indexing the documents directory."""
