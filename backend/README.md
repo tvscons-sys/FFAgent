@@ -33,3 +33,10 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Health check: `GET http://127.0.0.1:8000/health`
+
+Run ingestion from the `backend` directory after starting ChromaDB or using the local persistent
+store:
+
+```powershell
+python -m scripts.ingest_documents
+```
