@@ -1,1 +1,1 @@
-"""Qdrant collection and vector persistence integration."""
+"""ChromaDB collection and vector persistence integration."""
