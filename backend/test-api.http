@@ -1,0 +1,26 @@
+### Health check
+GET http://127.0.0.1:8000/health
+
+### Chat request - DTC lookup
+POST http://127.0.0.1:8000/chat
+Content-Type: application/json
+
+{
+  "query": "What does DTC code P10301 mean?"
+}
+
+### Chat request - PDF related question
+POST http://127.0.0.1:8000/chat
+Content-Type: application/json
+
+{
+  "query": "What are the troubleshooting steps for the related fault?"
+}
+
+### Chat request - general support lookup
+POST http://127.0.0.1:8000/chat
+Content-Type: application/json
+
+{
+  "query": "Explain the issue in the support documents and suggest the repair action."
+}

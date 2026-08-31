@@ -1,9 +1,11 @@
 package com.ffassistant.sdk.ui
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,6 +16,7 @@ import com.ffassistant.sdk.databinding.ActivityChatBinding
 import com.ffassistant.sdk.network.AssistantResult
 import com.ffassistant.sdk.network.ChatMessage
 import com.ffassistant.sdk.network.Sender
+import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 
 class ChatActivity : AppCompatActivity() {
@@ -26,18 +29,24 @@ class ChatActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
         repository = ChatRepository(FfAssistant.context())
         binding.messages.layoutManager = LinearLayoutManager(this)
         binding.messages.adapter = adapter
+
         val cachedMessages = repository.loadMessages()
-        messages += cachedMessages
-        adapter.notifyItemRangeInserted(0, cachedMessages.size)
+        if (cachedMessages.isNotEmpty()) {
+            messages.addAll(cachedMessages)
+            adapter.notifyDataSetChanged()
+        }
+
         binding.send.setOnClickListener { sendMessage() }
     }
 
     private fun sendMessage() {
         val text = binding.input.text.toString().trim()
         if (text.isEmpty() || binding.loading.visibility == View.VISIBLE) return
+
         val userMessage = repository.userMessage(text)
         messages += userMessage
         repository.saveMessage(userMessage)
@@ -46,13 +55,17 @@ class ChatActivity : AppCompatActivity() {
         binding.input.text?.clear()
         binding.loading.visibility = View.VISIBLE
         binding.send.isEnabled = false
+
         lifecycleScope.launch {
-            when (val result = repository.send(text)) {
-                is AssistantResult.Success -> repository.assistantMessage(result.value.answer)
-                    .also { messages += it; repository.saveMessage(it) }
-                is AssistantResult.Failure -> repository.assistantMessage(result.error.userMessage)
-                    .also { messages += it; repository.saveMessage(it) }
+            val result = repository.send(text)
+            val responseText = when (result) {
+                is AssistantResult.Success -> result.value.answer
+                is AssistantResult.Failure -> result.error.userMessage
             }
+
+            val assistantMessage = repository.assistantMessage(responseText)
+            messages += assistantMessage
+            repository.saveMessage(assistantMessage)
             adapter.notifyItemInserted(messages.lastIndex)
             binding.messages.scrollToPosition(messages.lastIndex)
             binding.loading.visibility = View.GONE
@@ -63,14 +76,30 @@ class ChatActivity : AppCompatActivity() {
 
 private class MessageAdapter(private val items: List<ChatMessage>) : RecyclerView.Adapter<MessageAdapter.Holder>() {
     class Holder(view: View) : RecyclerView.ViewHolder(view)
-    override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int) =
-        Holder(android.view.LayoutInflater.from(parent.context).inflate(com.ffassistant.sdk.R.layout.item_message, parent, false))
-    override fun getItemCount() = items.size
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+        val view = LayoutInflater.from(parent.context).inflate(com.ffassistant.sdk.R.layout.item_message, parent, false)
+        return Holder(view)
+    }
+
+    override fun getItemCount(): Int = items.size
+
     override fun onBindViewHolder(holder: Holder, position: Int) {
-        val view = holder.itemView as android.widget.TextView
         val message = items[position]
-        view.text = message.text
-        view.gravity = if (message.sender == Sender.USER) Gravity.END else Gravity.START
-        view.setTextColor(Color.DKGRAY)
+        val card = holder.itemView as MaterialCardView
+        val textView = card.findViewById<TextView>(com.ffassistant.sdk.R.id.messageText)
+        textView.text = message.text
+
+        val isUser = message.sender == Sender.USER
+        val layoutParams = card.layoutParams as RecyclerView.LayoutParams
+        layoutParams.marginStart = if (isUser) 64 else 0
+        layoutParams.marginEnd = if (isUser) 0 else 64
+        card.layoutParams = layoutParams
+
+        card.setCardBackgroundColor(
+            if (isUser) 0xFF1F5EFF.toInt() else 0xFFE9EEF8.toInt()
+        )
+        textView.setTextColor(if (isUser) 0xFFFFFFFF.toInt() else 0xFF1B1B1B.toInt())
+        textView.gravity = if (isUser) Gravity.END else Gravity.START
     }
 }

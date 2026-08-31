@@ -1,16 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:padding="16dp">
-    <TextView android:id="@+id/title" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:text="@string/assistant_title" android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall" />
-    <androidx.recyclerview.widget.RecyclerView android:id="@+id/messages" android:layout_width="match_parent"
-        android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingVertical="12dp" />
-    <ProgressBar android:id="@+id/loading" android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal" android:visibility="gone" />
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-        <EditText android:id="@+id/input" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:hint="@string/issue_hint" android:inputType="textCapSentences|textMultiLine" android:maxLines="4" />
-        <com.google.android.material.button.MaterialButton android:id="@+id/send" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/send" />
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F4F7FB"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/assistant_title"
+        android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
+        android:textColor="#13294B"
+        android:paddingTop="8dp"
+        android:paddingBottom="12dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/messages"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingTop="8dp"
+        android:paddingBottom="12dp" />
+
+    <ProgressBar
+        android:id="@+id/loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:indeterminateTint="#1F5EFF"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#FFFFFF"
+        android:padding="8dp"
+        android:elevation="2dp"
+        android:layout_marginBottom="8dp">
+
+        <EditText
+            android:id="@+id/input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:hint="@string/issue_hint"
+            android:padding="12dp"
+            android:textColor="#1B1B1B"
+            android:textColorHint="#8A94A6"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="4" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/send"
+            app:cornerRadius="18dp"
+            android:backgroundTint="#1F5EFF" />
     </LinearLayout>
 </LinearLayout>

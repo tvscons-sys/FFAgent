@@ -30,7 +30,7 @@ internal class ChatRepository(context: Context) {
     }
 
     suspend fun send(text: String): AssistantResult<com.ffassistant.sdk.network.ChatResponse> {
-        return FfAssistant.service.sendMessage(ChatRequest(sessionId, text, FfAssistant.productName()))
+        return FfAssistant.service.sendMessage(ChatRequest(query = text))
     }
 
     fun userMessage(text: String) = ChatMessage(UUID.randomUUID().toString(), text, Sender.USER)

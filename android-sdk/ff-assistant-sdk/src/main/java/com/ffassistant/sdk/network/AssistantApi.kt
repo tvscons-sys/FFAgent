@@ -8,40 +8,23 @@ import retrofit2.http.POST
 interface AssistantApi {
     @POST("chat")
     suspend fun chat(@Body request: ChatRequest): Response<ChatResponse>
-
-    @POST("ticket")
-    suspend fun createTicket(@Body request: TicketRequest): Response<TicketResponse>
 }
 
 data class ChatRequest(
-    val sessionId: String,
-    val message: String,
-    val product: String? = null,
-    val metadata: Map<String, String> = emptyMap()
+    val query: String
+)
+
+data class ChatSource(
+    val document: String? = null,
+    val type: String? = null,
+    val location: Any? = null,
+    val relevance: Double? = null
 )
 
 data class ChatResponse(
-    val sessionId: String,
     val answer: String,
-    val confidence: Double? = null,
-    val likelyCause: String? = null,
-    val evidence: List<String> = emptyList(),
-    val relatedIssues: List<String> = emptyList(),
-    val resolved: Boolean = false
-)
-
-data class TicketRequest(
-    val sessionId: String,
-    val title: String,
-    val description: String,
-    val product: String? = null,
-    val conversation: List<ChatMessage> = emptyList()
-)
-
-data class TicketResponse(
-    val ticketId: String,
-    val status: String,
-    val message: String? = null
+    val sources: List<ChatSource> = emptyList(),
+    val retrieved_count: Int = 0
 )
 
 data class ChatMessage(
