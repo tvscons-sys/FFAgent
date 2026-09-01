@@ -4,18 +4,54 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F4F7FB"
-    android:padding="16dp">
+    android:background="@color/ff_background">
 
-    <TextView
-        android:id="@+id/title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/assistant_title"
-        android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
-        android:textColor="#13294B"
-        android:paddingTop="8dp"
-        android:paddingBottom="12dp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="16dp"
+        android:background="@color/ff_teal_900">
+
+        <TextView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:text="FF"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:textColor="@color/ff_teal_900"
+            android:background="@drawable/bg_avatar" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/assistant_title"
+                android:textSize="19sp"
+                android:textStyle="bold"
+                android:textColor="@color/ff_surface" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="@string/assistant_status"
+                android:textSize="13sp"
+                android:textColor="@color/ff_mint_100" />
+        </LinearLayout>
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/messages"
@@ -23,7 +59,9 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingTop="8dp"
+        android:paddingStart="20dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="20dp"
         android:paddingBottom="12dp" />
 
     <ProgressBar
@@ -31,7 +69,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:indeterminateTint="#1F5EFF"
+        android:indeterminateTint="@color/ff_teal_500"
         android:visibility="gone" />
 
     <LinearLayout
@@ -39,10 +77,12 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#FFFFFF"
         android:padding="8dp"
-        android:elevation="2dp"
-        android:layout_marginBottom="8dp">
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_composer"
+        android:elevation="2dp">
 
         <EditText
             android:id="@+id/input"
@@ -51,9 +91,12 @@
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:hint="@string/issue_hint"
-            android:padding="12dp"
-            android:textColor="#1B1B1B"
-            android:textColorHint="#8A94A6"
+            android:paddingStart="14dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="10dp"
+            android:textColor="@color/ff_ink"
+            android:textColorHint="@color/ff_muted"
             android:inputType="textCapSentences|textMultiLine"
             android:maxLines="4" />
 
@@ -61,8 +104,11 @@
             android:id="@+id/send"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/send"
+            android:contentDescription="@string/send"
+            android:text=">"
+            android:textSize="22sp"
+            android:textColor="@color/ff_surface"
             app:cornerRadius="18dp"
-            android:backgroundTint="#1F5EFF" />
+            android:backgroundTint="@color/ff_teal_700" />
     </LinearLayout>
 </LinearLayout>

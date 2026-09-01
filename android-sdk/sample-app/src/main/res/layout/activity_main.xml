@@ -6,29 +6,42 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="28dp"
-    android:background="#F4F7FB">
+    android:background="#F5FAF9">
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="28dp"
         app:cardCornerRadius="24dp"
-        app:cardElevation="4dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#D8E8E5"
         app:cardBackgroundColor="#FFFFFF">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="26dp">
+
+            <TextView
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:gravity="center"
+                android:text="FF"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="#073B3A"
+                android:background="@drawable/bg_avatar" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="FF Support Assistant"
-                android:textSize="28sp"
+                android:layout_marginTop="18dp"
+                android:textSize="29sp"
                 android:textStyle="bold"
-                android:textColor="#13294B" />
+                android:textColor="#073B3A" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -36,7 +49,7 @@
                 android:layout_marginTop="8dp"
                 android:text="Ask about DTCs, faults, service steps, and repair guidance."
                 android:textSize="16sp"
-                android:textColor="#4E5C75" />
+                android:textColor="#607575" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -48,5 +61,5 @@
         android:textAllCaps="false"
         android:textSize="16sp"
         app:cornerRadius="18dp"
-        android:backgroundTint="#1F5EFF" />
+        android:backgroundTint="#087F76" />
 </LinearLayout>

@@ -88,18 +88,21 @@ private class MessageAdapter(private val items: List<ChatMessage>) : RecyclerVie
         val message = items[position]
         val card = holder.itemView as MaterialCardView
         val textView = card.findViewById<TextView>(com.ffassistant.sdk.R.id.messageText)
+        val senderLabel = card.findViewById<TextView>(com.ffassistant.sdk.R.id.senderLabel)
         textView.text = message.text
 
         val isUser = message.sender == Sender.USER
+        senderLabel.text = if (isUser) "YOU" else "FF ASSISTANT"
+        senderLabel.setTextColor(if (isUser) 0xFFE0FFFA.toInt() else 0xFF087F76.toInt())
         val layoutParams = card.layoutParams as RecyclerView.LayoutParams
         layoutParams.marginStart = if (isUser) 64 else 0
         layoutParams.marginEnd = if (isUser) 0 else 64
         card.layoutParams = layoutParams
 
         card.setCardBackgroundColor(
-            if (isUser) 0xFF1F5EFF.toInt() else 0xFFE9EEF8.toInt()
+            if (isUser) 0xFF087F76.toInt() else 0xFFF1FBF9.toInt()
         )
-        textView.setTextColor(if (isUser) 0xFFFFFFFF.toInt() else 0xFF1B1B1B.toInt())
+        textView.setTextColor(if (isUser) 0xFFFFFFFF.toInt() else 0xFF102A2A.toInt())
         textView.gravity = if (isUser) Gravity.END else Gravity.START
     }
 }

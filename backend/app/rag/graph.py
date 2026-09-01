@@ -6,6 +6,7 @@ from langgraph.graph import END, START, StateGraph
 
 from app.core.config import settings
 from app.rag.generator import (
+	build_greeting_answer,
 	build_follow_up_answer,
 	generate_answer_from_results,
 	needs_follow_up,
@@ -68,6 +69,12 @@ def chat(query: str) -> dict[str, Any]:
 		raise ValueError("Query cannot be empty.")
 
 	clean_query = query.strip()
+	if clean_query.lower() in {"hi", "hello", "hey", "good morning", "good afternoon", "good evening"}:
+		return {
+			"answer": build_greeting_answer(),
+			"sources": [],
+			"retrieved_count": 0,
+		}
 	if needs_follow_up(clean_query):
 		return {
 			"answer": build_follow_up_answer(clean_query),

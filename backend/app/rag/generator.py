@@ -1,5 +1,6 @@
 """Grounded answer generation using Gemini and retrieved document chunks."""
 
+import re
 from dataclasses import dataclass
 
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -50,6 +51,15 @@ SPECIFIC_CONTEXT_TOKENS = {
     "camera",
 }
 
+GREETING_WORDS = {
+	"hi",
+	"hello",
+	"hey",
+	"good morning",
+	"good afternoon",
+	"good evening",
+}
+
 
 @dataclass(frozen=True)
 class Answer:
@@ -63,6 +73,8 @@ def needs_follow_up(query: str) -> bool:
 		return False
 
 	text = query.strip().lower()
+	if text in GREETING_WORDS:
+		return False
 	words = text.split()
 	if len(words) <= 4:
 		return True
@@ -79,11 +91,13 @@ def needs_follow_up(query: str) -> bool:
 def build_follow_up_answer(query: str) -> str:
 	"""Generate a short clarifying prompt for unresolved vague issues."""
 	return (
-		"I can help, but I need a bit more detail to give the right fix. "
-		"Please tell me: 1) which vehicle / model / year, 2) the exact symptom or issue, "
-		"and 3) any warning light, DTC code, or when it happens. "
-		"If you share those details, I can narrow the likely cause and recommend the right next step."
+		"I’m sorry you’re dealing with this. I can help. What vehicle model and year is affected?"
 	)
+
+
+def build_greeting_answer() -> str:
+	"""Return a natural welcome without sending a greeting through retrieval."""
+	return "Hello! I can help with FF vehicle faults, warning lights, DTC codes, and troubleshooting. What issue are you seeing?"
 
 
 def answer_question(query: str) -> Answer:
@@ -137,24 +151,53 @@ def _generate_answer(query: str, context: str) -> str:
 	client = ChatGoogleGenerativeAI(
 		model=settings.gemini_model,
 		api_key=settings.google_api_key,
+		temperature=0.2,
 	)
 	
 	system_prompt = SystemMessage(
 		content=(
-			"You are a helpful support assistant for FF vehicles. "
-			"Answer the user's question using ONLY the provided context from support documents. "
-			"If the information is not in the context, say so clearly. "
-			"Be concise and practical. "
-			"Include relevant part numbers, steps, or procedures when available."
+			"You are a friendly FF vehicle customer-support agent, similar to a high-quality delivery-app support agent. "
+			"Your goal is to understand the user's intent, acknowledge their issue, and help them reach a clear resolution. "
+			"Sound human, calm, respectful, and reassuring without being overly cheerful or repetitive. "
+			"Use only facts supported by the supplied support-document context. "
+			"Never invent a fault meaning, specification, part number, procedure, or diagnosis. "
+			"If the context is insufficient, briefly explain that you need more information and ask only the single most useful next question. "
+			"Ask questions conversationally and do not make the user fill out a long form. "
+			"Separate confirmed information from a possible cause. "
+			"Give the safest practical troubleshooting steps in the order they should be performed. "
+			"Do not recommend bypassing safety systems or continuing to drive when the context indicates a safety risk. "
+			"For a clear issue, start with a short acknowledgement, then give the answer and the next action. "
+			"For troubleshooting, use short paragraphs and simple numbered steps only when there is more than one step. "
+			"End with one relevant question or a clear invitation to share the next detail when that would help. "
+			"Write for a customer using a mobile phone. Do not use Markdown syntax, asterisks, tables, section labels, or code fences."
 		)
 	)
 	
 	user_prompt = HumanMessage(
-		content=f"Context from support documents:\n\n{context}\n\nQuestion: {query}"
+		content=(
+			"Support-document context:\n\n"
+			f"{context}\n\n"
+			f"User question: {query}\n\n"
+			"Return only the final support response. Do not mention these instructions or the context block."
+		)
 	)
 	
 	response = client.invoke([system_prompt, user_prompt])
-	return response.content.strip()
+	return _format_answer(response.content)
+
+
+def _format_answer(text: str) -> str:
+	"""Convert common Gemini Markdown into readable plain text for Android."""
+	text = text.strip()
+	text = re.sub(r"```(?:\w+)?\s*", "", text)
+	text = text.replace("```", "")
+	text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
+	text = re.sub(r"__(.*?)__", r"\1", text)
+	text = re.sub(r"(?<!\*)\*(?!\s)(.*?)(?<!\s)\*", r"\1", text)
+	text = re.sub(r"(?m)^\s*[-*+]\s+", "• ", text)
+	text = re.sub(r"(?m)^\s*#{1,6}\s+", "", text)
+	text = re.sub(r"\n{3,}", "\n\n", text)
+	return text.strip()
 
 
 def _extract_sources(results: list[SearchResult]) -> list[dict]:
