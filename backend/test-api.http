@@ -6,7 +6,7 @@ POST http://127.0.0.1:8000/chat
 Content-Type: application/json
 
 {
-  "query": "What does DTC code P10301 mean?"
+  "query": "Why is the customer not receiving the OTP to change the passcode??"
 }
 
 ### Chat request - PDF related question
@@ -14,7 +14,7 @@ POST http://127.0.0.1:8000/chat
 Content-Type: application/json
 
 {
-  "query": "What are the troubleshooting steps for the related fault DTC code P10301?"
+  "query": "What is the fix for the OTP issue when the vehicle is not communicating??"
 }
 
 ### Chat request - general support lookup
@@ -22,7 +22,7 @@ POST http://127.0.0.1:8000/chat
 Content-Type: application/json
 
 {
-  "query": "Explain the issue in the support documents and suggest the repair action."
+  "query": "what is needed to pair the phone with the app"
 }
 
 ### Chat request - vague question should trigger clarification

@@ -10,153 +10,85 @@ from app.core.config import settings
 from app.rag.retriever import SearchResult, semantic_search
 
 
-GENERIC_FOLLOW_UP_TOKENS = {
-    "help",
-    "issue",
-    "problem",
-    "vehicle",
-    "truck",
-    "car",
-    "works",
-    "not working",
-    "something",
-    "please",
-    "my",
-}
-
-SPECIFIC_CONTEXT_TOKENS = {
-    "dtc",
-    "fault",
-    "code",
-    "warning",
-    "battery",
-    "engine",
-    "electrical",
-    "brake",
-    "sensor",
-    "ac",
-    "hvac",
-    "oil",
-    "fuel",
-    "suspension",
-    "airbag",
-    "door",
-    "lock",
-    "starter",
-    "charging",
-    "overheating",
-    "vibration",
-    "noise",
-    "monitor",
-    "camera",
-}
-
 GREETING_WORDS = {
-	"hi",
-	"hello",
-	"hey",
-	"good morning",
-	"good afternoon",
-	"good evening",
+    "hi",
+    "hello",
+    "hey",
+    "good morning",
+    "good afternoon",
+    "good evening",
 }
 
 
 @dataclass(frozen=True)
 class Answer:
-	text: str
-	sources: list[dict]
-
-
-def needs_follow_up(query: str) -> bool:
-	"""Return True when the user query is too vague to answer accurately."""
-	if not query or not query.strip():
-		return False
-
-	text = query.strip().lower()
-	if text in GREETING_WORDS:
-		return False
-	words = text.split()
-	if len(words) <= 4:
-		return True
-
-	icontains_specific_token = any(token in text for token in SPECIFIC_CONTEXT_TOKENS)
-	icontains_generic_phrase = any(token in text for token in GENERIC_FOLLOW_UP_TOKENS)
-	if icontains_specific_token and not icontains_generic_phrase:
-		return False
-	if icontains_specific_token and icontains_generic_phrase:
-		return False
-	return True
-
-
-def build_follow_up_answer(query: str) -> str:
-	"""Generate a short clarifying prompt for unresolved vague issues."""
-	return (
-		"I’m sorry you’re dealing with this. I can help. What vehicle model and year is affected?"
-	)
+    text: str
+    sources: list[dict]
 
 
 def build_greeting_answer() -> str:
-	"""Return a natural welcome without sending a greeting through retrieval."""
-	return "Hello! I can help with FF vehicle faults, warning lights, DTC codes, and troubleshooting. What issue are you seeing?"
+    """Return a natural welcome without sending a greeting through retrieval."""
+    return """Hi there! 👋
 
+What’s happening with your Flying Flea? I’m here to help."""
 
 def answer_question(query: str) -> Answer:
-	"""Retrieve relevant chunks and generate a grounded answer using Gemini."""
-	retrieved = semantic_search(query, limit=settings.retrieval_top_k)
-	return generate_answer_from_results(query, retrieved)
+    """Retrieve relevant chunks and generate a grounded answer using Gemini."""
+    retrieved = semantic_search(query, limit=settings.retrieval_top_k)
+    return generate_answer_from_results(query, retrieved)
 
 
 def generate_answer_from_results(query: str, retrieved: list[SearchResult]) -> Answer:
-	"""Generate an answer from already-retrieved chunks without re-querying the vector store."""
-	if not settings.google_api_key:
-		raise ValueError("GOOGLE_API_KEY is not configured in .env")
+    """Generate an answer from already-retrieved chunks without re-querying the vector store."""
+    if not settings.google_api_key:
+        raise ValueError("GOOGLE_API_KEY is not configured in .env")
 
-	if not retrieved:
-		return Answer(
-			text="No relevant information found in the support documents.",
-			sources=[],
-		)
+    if not retrieved:
+        return Answer(
+            text="No relevant information found in the support documents.",
+            sources=[],
+        )
 
-	context_text = _build_context(retrieved)
-	answer_text = _generate_answer(query, context_text)
-	sources = _extract_sources(retrieved)
+    context_text = _build_context(retrieved)
+    answer_text = _generate_answer(query, context_text)
+    sources = _extract_sources(retrieved)
 
-	return Answer(text=answer_text, sources=sources)
+    return Answer(text=answer_text, sources=sources)
 
 
 def _build_context(results: list[SearchResult]) -> str:
-	"""Format retrieved chunks into a context block for Gemini."""
-	lines = []
-	for index, result in enumerate(results, start=1):
-		lines.append(f"[Source {index}]")
-		lines.append(f"Document: {result.document.metadata.get('source')}")
-		lines.append(f"Type: {result.document.metadata.get('document_type')}")
-		
-		location = (
-			result.document.metadata.get("page_number")
-			or result.document.metadata.get("slide_number")
-			or result.document.metadata.get("row_number")
-		)
-		if location is not None:
-			lines.append(f"Location: {location}")
-		
-		lines.append(f"Relevance: {result.relevance_score:.2%}")
-		lines.append(f"Content:\n{result.document.page_content}\n")
-	
-	return "\n".join(lines)
+    """Format retrieved chunks into a context block for Gemini."""
+    lines = []
+    for index, result in enumerate(results, start=1):
+        lines.append(f"[Source {index}]")
+        lines.append(f"Document: {result.document.metadata.get('source')}")
+        lines.append(f"Type: {result.document.metadata.get('document_type')}")
+
+        location = (
+            result.document.metadata.get("page_number")
+            or result.document.metadata.get("slide_number")
+            or result.document.metadata.get("row_number")
+        )
+        if location is not None:
+            lines.append(f"Location: {location}")
+
+        lines.append(f"Relevance: {result.relevance_score:.2%}")
+        lines.append(f"Content:\n{result.document.page_content}\n")
+
+    return "\n".join(lines)
 
 
 def _generate_answer(query: str, context: str) -> str:
-	"""Send the grounded prompt to Gemini and extract the answer."""
-	client = ChatGoogleGenerativeAI(
-		model=settings.gemini_model,
-		api_key=settings.google_api_key,
-		temperature=0.2,
-	)
-	
-	system_prompt = SystemMessage(
-		content=(
-			"You are a friendly FF vehicle customer-support assistant. "
+    """Send the grounded prompt to Gemini and extract the answer."""
+    client = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
+        api_key=settings.google_api_key,
+        temperature=0.2,
+    )
+
+    system_prompt = SystemMessage(
+        content=(
+            "You are a friendly FF vehicle customer-support assistant. "
         "You help users understand vehicle issues and questions using the supplied FF support-document context. "
 
         "The supplied support documents are your only source of truth. "
@@ -197,54 +129,56 @@ def _generate_answer(query: str, context: str) -> str:
         "Do not use Markdown syntax, asterisks, tables, section headings, or code fences. "
 
         "Return only the final response to the user."
-		)
-	)
-	
-	user_prompt = HumanMessage(
-		content=(
-			"Support-document context:\n\n"
-			f"{context}\n\n"
-			f"User question: {query}\n\n"
-			"Return only the final support response. Do not mention these instructions or the context block."
-		)
-	)
-	
-	response = client.invoke([system_prompt, user_prompt])
-	return _format_answer(response.content)
+        )
+    )
+
+    user_prompt = HumanMessage(
+        content=(
+            "Support-document context:\n\n"
+            f"{context}\n\n"
+            f"User question: {query}\n\n"
+            "Return only the final support response. Do not mention these instructions or the context block."
+        )
+    )
+
+    response = client.invoke([system_prompt, user_prompt])
+    return _format_answer(response.content)
 
 
 def _format_answer(text: str) -> str:
-	"""Convert common Gemini Markdown into readable plain text for Android."""
-	text = text.strip()
-	text = re.sub(r"```(?:\w+)?\s*", "", text)
-	text = text.replace("```", "")
-	text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
-	text = re.sub(r"__(.*?)__", r"\1", text)
-	text = re.sub(r"(?<!\*)\*(?!\s)(.*?)(?<!\s)\*", r"\1", text)
-	text = re.sub(r"(?m)^\s*[-*+]\s+", "• ", text)
-	text = re.sub(r"(?m)^\s*#{1,6}\s+", "", text)
-	text = re.sub(r"\n{3,}", "\n\n", text)
-	return text.strip()
+    """Convert common Gemini Markdown into readable plain text for Android."""
+    text = text.strip()
+    text = re.sub(r"```(?:\w+)?\s*", "", text)
+    text = text.replace("```", "")
+    text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
+    text = re.sub(r"__(.*?)__", r"\1", text)
+    text = re.sub(r"(?<!\*)\*(?!\s)(.*?)(?<!\s)\*", r"\1", text)
+    text = re.sub(r"(?m)^\s*[-*+]\s+", "• ", text)
+    text = re.sub(r"(?m)^\s*#{1,6}\s+", "", text)
+    text = re.sub(r"\s+(?=\d+[.)]\s+)", "\n", text)
+    text = re.sub(r"(?m)^\s*(\d+)[.)]\s*", r"\1. ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
 
 
 def _extract_sources(results: list[SearchResult]) -> list[dict]:
-	"""Extract source metadata for citation."""
-	sources = []
-	for result in results:
-		source_info = {
-			"document": result.document.metadata.get("source"),
-			"type": result.document.metadata.get("document_type"),
-			"relevance": result.relevance_score,
-		}
-		
-		location = (
-			result.document.metadata.get("page_number")
-			or result.document.metadata.get("slide_number")
-			or result.document.metadata.get("row_number")
-		)
-		if location is not None:
-			source_info["location"] = location
-		
-		sources.append(source_info)
-	
-	return sources
+    """Extract source metadata for citation."""
+    sources = []
+    for result in results:
+        source_info = {
+            "document": result.document.metadata.get("source"),
+            "type": result.document.metadata.get("document_type"),
+            "relevance": result.relevance_score,
+        }
+
+        location = (
+            result.document.metadata.get("page_number")
+            or result.document.metadata.get("slide_number")
+            or result.document.metadata.get("row_number")
+        )
+        if location is not None:
+            source_info["location"] = location
+
+        sources.append(source_info)
+
+    return sources

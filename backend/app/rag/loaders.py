@@ -1,5 +1,6 @@
 """Load supported source files into LangChain Documents."""
 
+import csv
 from pathlib import Path
 
 from langchain_community.document_loaders import Docx2txtLoader, TextLoader
@@ -8,7 +9,7 @@ from openpyxl import load_workbook
 from pypdf import PdfReader
 from pptx import Presentation
 
-SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".txt", ".md", ".xlsx", ".xlsm", ".pptx"}
+SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".txt", ".md", ".csv", ".xlsx", ".xlsm", ".pptx"}
 
 
 def load_source_documents(data_dir: Path) -> list[Document]:
@@ -29,6 +30,8 @@ def load_file(path: Path) -> list[Document]:
 	if extension in {".txt", ".md"}:
 		documents = TextLoader(str(path), encoding="utf-8").load()
 		return [_add_common_metadata(document, path, extension[1:]) for document in documents]
+	if extension == ".csv":
+		return _load_csv(path)
 	if extension in {".xlsx", ".xlsm"}:
 		return _load_workbook(path)
 	if extension == ".pptx":
@@ -132,6 +135,34 @@ def _load_presentation(path: Path) -> list[Document]:
 					"slide_number": slide_number,
 					"slide_title": slide_title,
 					"chunk_strategy": "pptx_slide",
+				},
+			))
+	return documents
+
+
+def _load_csv(path: Path) -> list[Document]:
+	"""Load one searchable document per CSV row while preserving column names."""
+	documents: list[Document] = []
+	with path.open("r", encoding="utf-8-sig", newline="") as csv_file:
+		reader = csv.DictReader(csv_file)
+		if not reader.fieldnames:
+			return documents
+		for row_number, row in enumerate(reader, start=2):
+			fields = [
+				f"{header.strip()}: {value.strip()}"
+				for header, value in row.items()
+				if header and value and value.strip()
+			]
+			if not fields:
+				continue
+			documents.append(Document(
+				page_content=" | ".join(fields),
+				metadata={
+					"source": path.name,
+					"source_path": path.name,
+					"document_type": "spreadsheet",
+					"row_number": row_number,
+					"chunk_strategy": "csv_row",
 				},
 			))
 	return documents

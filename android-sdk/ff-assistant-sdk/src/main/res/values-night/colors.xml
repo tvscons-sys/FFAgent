@@ -1,0 +1,25 @@
+<resources>
+    <color name="ff_cyan_900">#000000</color>
+    <color name="ff_cyan_700">#0EA5A0</color>
+    <color name="ff_cyan_500">#1FC2BC</color>
+    <color name="ff_cyan_100">#123433</color>
+
+    <color name="ff_teal_900">#000000</color>
+    <color name="ff_teal_700">#0EA5A0</color>
+    <color name="ff_teal_500">#1FC2BC</color>
+    <color name="ff_mint_100">#123433</color>
+    <color name="ff_mint_50">#15201F</color>
+
+    <color name="ff_ink">#EAF3F2</color>
+    <color name="ff_muted">#9FB3B2</color>
+    <color name="ff_surface">#15201F</color>
+    <color name="ff_background">#0B1413</color>
+    <color name="ff_line">#233635</color>
+    <color name="ff_header_tagline">#B7F1E9</color>
+    <color name="ff_brand_title">#FFFFFF</color>
+
+    <color name="ff_success_bg">#0F2B26</color>
+    <color name="ff_success_border">#1FC2BC</color>
+    <color name="ff_ticket_bg">#2A2115</color>
+    <color name="ff_ticket_border">#E8A64D</color>
+</resources>

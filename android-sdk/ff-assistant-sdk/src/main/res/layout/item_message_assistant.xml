@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginVertical="6dp"
+    android:layout_marginEnd="64dp"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/ff_line"
+    app:cardBackgroundColor="@color/ff_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="15dp">
+
+        <TextView
+            android:id="@+id/senderLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ff_assistant"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:textColor="@color/ff_cyan_700" />
+
+        <!-- Rendered from the RAG answer. Supports simple HTML (bold section
+             headers, numbered "What you can do" steps) via Html.fromHtml in
+             ChatActivity, matching the reference screenshot's structured card. -->
+        <TextView
+            android:id="@+id/messageText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:textColor="@color/ff_ink"
+            android:textSize="16sp"
+            android:lineSpacingExtra="3dp" />
+
+        <!-- Shown only when retrieved_count == 0, i.e. the query wasn't
+             covered by the knowledge base. -->
+        <LinearLayout
+            android:id="@+id/noAnswerBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="10dp"
+            android:padding="12dp"
+            android:background="@drawable/bg_ticket_banner"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/no_answer_found"
+                android:textSize="13sp"
+                android:textColor="@color/ff_ink" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/inlineRaiseTicket"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:paddingStart="0dp"
+                android:paddingEnd="0dp"
+                android:text="@string/raise_ticket"
+                android:textAllCaps="false"
+                android:textColor="@color/ff_cyan_700"
+                app:icon="@drawable/ic_ticket"
+                app:iconTint="@color/ff_cyan_700" />
+        </LinearLayout>
+
+        <!-- Feedback row -->
+        <LinearLayout
+            android:id="@+id/feedbackRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="12dp">
+
+            <TextView
+                android:id="@+id/feedbackPrompt"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/was_this_helpful"
+                android:textSize="13sp"
+                android:textColor="@color/ff_muted" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/thumbUp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:minWidth="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/feedback_yes"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textColor="@color/ff_cyan_700"
+                app:icon="@drawable/ic_thumb_up"
+                app:iconTint="@color/ff_cyan_700"
+                app:iconSize="14dp"
+                app:strokeColor="@color/ff_cyan_500"
+                app:cornerRadius="16dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/thumbDown"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
+                android:minWidth="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/feedback_no"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textColor="@color/ff_muted"
+                app:icon="@drawable/ic_thumb_down"
+                app:iconTint="@color/ff_muted"
+                app:iconSize="14dp"
+                app:strokeColor="@color/ff_line"
+                app:cornerRadius="16dp" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

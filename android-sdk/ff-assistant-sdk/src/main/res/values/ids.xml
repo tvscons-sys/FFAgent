@@ -1,0 +1,6 @@
+<resources>
+    <item name="menu_raise_ticket" type="id" />
+    <item name="menu_clear_chat" type="id" />
+    <item name="menu_support_profile" type="id" />
+    <item name="menu_theme" type="id" />
+</resources>

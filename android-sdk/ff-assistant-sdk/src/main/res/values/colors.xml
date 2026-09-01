@@ -1,12 +1,27 @@
 <resources>
+    <!-- Brand cyan (matches web/marketing spec #0ea5a0) -->
+    <color name="ff_cyan_900">#073B3A</color>
+    <color name="ff_cyan_700">#0B7E77</color>
+    <color name="ff_cyan_500">#0EA5A0</color>
+    <color name="ff_cyan_100">#DDF5F0</color>
+
+    <!-- Legacy aliases kept so existing references still compile -->
     <color name="ff_teal_900">#073B3A</color>
-    <color name="ff_teal_700">#087F76</color>
-    <color name="ff_teal_500">#0FA89A</color>
+    <color name="ff_teal_700">#0B7E77</color>
+    <color name="ff_teal_500">#0EA5A0</color>
     <color name="ff_mint_100">#DDF5F0</color>
     <color name="ff_mint_50">#F1FBF9</color>
+
     <color name="ff_ink">#102A2A</color>
     <color name="ff_muted">#607575</color>
     <color name="ff_surface">#FFFFFF</color>
     <color name="ff_background">#F5FAF9</color>
     <color name="ff_line">#D8E8E5</color>
+    <color name="ff_header_tagline">#B7F1E9</color>
+    <color name="ff_brand_title">#000000</color>
+
+    <color name="ff_success_bg">#E7F7F2</color>
+    <color name="ff_success_border">#0EA5A0</color>
+    <color name="ff_ticket_bg">#FFF4E9</color>
+    <color name="ff_ticket_border">#E8A64D</color>
 </resources>

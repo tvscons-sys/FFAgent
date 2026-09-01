@@ -1,6 +1,29 @@
 <resources>
-    <string name="assistant_title">FF Support Assistant</string>
-    <string name="assistant_status">EV care, diagnostics, and guidance</string>
-    <string name="issue_hint">Describe the issue</string>
+    <string name="assistant_title">FLYING FLEA</string>
+    <string name="assistant_status">Ride further. Feel supported.</string>
+    <string name="issue_hint">Type your question…</string>
     <string name="send">Send</string>
+    <string name="back">Back</string>
+    <string name="more_options">More options</string>
+    <string name="dark_mode">Dark mode</string>
+    <string name="light_mode">Light mode</string>
+    <string name="raise_ticket">Raise a ticket</string>
+    <string name="clear_chat">Clear conversation</string>
+    <string name="support_profile">Support profile</string>
+    <string name="clear_chat_title">Clear conversation?</string>
+    <string name="clear_chat_body">This will remove the saved messages from this device.</string>
+    <string name="cancel">Cancel</string>
+    <string name="profile_title">FF Support</string>
+    <string name="profile_body">Official Flying Flea support for diagnostics, vehicle issues, and guided troubleshooting.</string>
+    <string name="was_this_helpful">Was this helpful?</string>
+    <string name="feedback_yes">Yes</string>
+    <string name="feedback_no">No</string>
+    <string name="feedback_thanks">Thanks for your feedback</string>
+    <string name="no_answer_found">We couldn\'t find this in our knowledge base.</string>
+    <string name="ticket_raised_title">Ticket raised</string>
+    <string name="ticket_raised_body">Our support team will get back to you shortly. Reference ID: %1$s</string>
+    <string name="attach">Attach a file</string>
+    <string name="voice_input">Voice input</string>
+    <string name="you">YOU</string>
+    <string name="ff_assistant">FF ASSISTANT</string>
 </resources>

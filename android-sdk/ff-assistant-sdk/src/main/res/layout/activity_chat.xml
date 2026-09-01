@@ -6,32 +6,43 @@
     android:orientation="vertical"
     android:background="@color/ff_background">
 
+    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingStart="20dp"
+        android:paddingStart="12dp"
         android:paddingTop="18dp"
-        android:paddingEnd="20dp"
+        android:paddingEnd="12dp"
         android:paddingBottom="16dp"
-        android:background="@color/ff_teal_900">
+        android:background="@color/ff_cyan_900">
 
-        <TextView
+        <ImageButton
+            android:id="@+id/backButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/back"
+            android:src="@drawable/ic_back" />
+
+        <ImageView
+            android:id="@+id/logo"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:gravity="center"
-            android:text="FF"
-            android:textStyle="bold"
-            android:textSize="15sp"
-            android:textColor="@color/ff_teal_900"
-            android:background="@drawable/bg_avatar" />
+            android:layout_marginStart="4dp"
+            android:padding="0dp"
+            android:background="@drawable/bg_avatar"
+            android:src="@drawable/logo_flying_flea"
+            android:scaleType="centerCrop"
+            android:clipToOutline="true"
+            android:contentDescription="@string/assistant_title" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="14dp"
+            android:layout_marginStart="12dp"
             android:orientation="vertical">
 
             <TextView
@@ -39,18 +50,42 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/assistant_title"
-                android:textSize="19sp"
+                android:textSize="20sp"
+                android:fontFamily="sans-serif-condensed"
+                android:letterSpacing="0.02"
                 android:textStyle="bold"
-                android:textColor="@color/ff_surface" />
+                android:textColor="@color/ff_brand_title" />
 
-            <TextView
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:text="@string/assistant_status"
-                android:textSize="13sp"
-                android:textColor="@color/ff_mint_100" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="2dp">
+
+                <ImageView
+                    android:layout_width="13dp"
+                    android:layout_height="13dp"
+                    android:layout_marginEnd="4dp"
+                    android:src="@drawable/ic_check_circle"
+                    android:contentDescription="@null" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/assistant_status"
+                    android:textSize="13sp"
+                    android:textColor="@color/ff_header_tagline" />
+            </LinearLayout>
         </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/menuButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/more_options"
+            android:src="@drawable/ic_more_vert" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -59,9 +94,9 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingStart="20dp"
+        android:paddingStart="16dp"
         android:paddingTop="12dp"
-        android:paddingEnd="20dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="12dp" />
 
     <ProgressBar
@@ -69,7 +104,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:indeterminateTint="@color/ff_teal_500"
+        android:indeterminateTint="@color/ff_cyan_500"
         android:visibility="gone" />
 
     <LinearLayout
@@ -77,12 +112,20 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="8dp"
+        android:padding="6dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_composer"
         android:elevation="2dp">
+
+        <ImageButton
+            android:id="@+id/attachButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/attach"
+            android:src="@drawable/ic_attach" />
 
         <EditText
             android:id="@+id/input"
@@ -91,24 +134,37 @@
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:hint="@string/issue_hint"
-            android:paddingStart="14dp"
+            android:paddingStart="6dp"
             android:paddingTop="10dp"
-            android:paddingEnd="8dp"
+            android:paddingEnd="6dp"
             android:paddingBottom="10dp"
             android:textColor="@color/ff_ink"
             android:textColorHint="@color/ff_muted"
             android:inputType="textCapSentences|textMultiLine"
             android:maxLines="4" />
 
+        <ImageButton
+            android:id="@+id/micButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/voice_input"
+            android:src="@drawable/ic_mic" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/send"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            style="@style/Widget.MaterialComponents.Button.Icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:contentDescription="@string/send"
-            android:text=">"
-            android:textSize="22sp"
-            android:textColor="@color/ff_surface"
-            app:cornerRadius="18dp"
-            android:backgroundTint="@color/ff_teal_700" />
+            app:icon="@drawable/ic_send"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:cornerRadius="20dp"
+            android:backgroundTint="@color/ff_cyan_700" />
     </LinearLayout>
 </LinearLayout>

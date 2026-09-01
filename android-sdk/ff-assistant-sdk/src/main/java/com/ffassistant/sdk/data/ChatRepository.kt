@@ -29,10 +29,20 @@ internal class ChatRepository(context: Context) {
         preferences.edit().putString("messages", gson.toJson(updated)).apply()
     }
 
+    fun clearMessages() {
+        preferences.edit().remove("messages").apply()
+    }
+
     suspend fun send(text: String): AssistantResult<com.ffassistant.sdk.network.ChatResponse> {
         return FfAssistant.service.sendMessage(ChatRequest(query = text))
     }
 
+    fun updateMessage(message: ChatMessage) {
+        val updated = loadMessages().map { if (it.id == message.id) message else it }
+        preferences.edit().putString("messages", gson.toJson(updated)).apply()
+    }
+
     fun userMessage(text: String) = ChatMessage(UUID.randomUUID().toString(), text, Sender.USER)
-    fun assistantMessage(text: String) = ChatMessage(UUID.randomUUID().toString(), text, Sender.ASSISTANT)
+    fun assistantMessage(text: String, retrievedCount: Int = -1) =
+        ChatMessage(UUID.randomUUID().toString(), text, Sender.ASSISTANT, retrievedCount = retrievedCount)
 }

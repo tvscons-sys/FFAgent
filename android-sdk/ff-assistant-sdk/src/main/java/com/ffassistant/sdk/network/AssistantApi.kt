@@ -31,8 +31,14 @@ data class ChatMessage(
     val id: String,
     val text: String,
     val sender: Sender,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    // UI-only fields (not sent to the backend): drive the "no answer found ->
+    // raise a ticket" prompt and the persisted thumbs-up/down feedback state.
+    val retrievedCount: Int = -1,
+    val feedback: Feedback? = Feedback.NONE
 )
+
+enum class Feedback { NONE, UP, DOWN }
 
 enum class Sender { USER, ASSISTANT }
 
