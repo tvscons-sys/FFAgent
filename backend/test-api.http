@@ -14,7 +14,7 @@ POST http://127.0.0.1:8000/chat
 Content-Type: application/json
 
 {
-  "query": "What are the troubleshooting steps for the related fault?"
+  "query": "What are the troubleshooting steps for the related fault DTC code P10301?"
 }
 
 ### Chat request - general support lookup
@@ -23,4 +23,20 @@ Content-Type: application/json
 
 {
   "query": "Explain the issue in the support documents and suggest the repair action."
+}
+
+### Chat request - vague question should trigger clarification
+POST http://127.0.0.1:8000/chat
+Content-Type: application/json
+
+{
+  "query": "my vehicle is not working"
+}
+
+### Chat request - vague but still specific enough for normal answer
+POST http://127.0.0.1:8000/chat
+Content-Type: application/json
+
+{
+  "query": "DTC P10301 in a 2022 FF truck"
 }

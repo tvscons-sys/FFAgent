@@ -5,7 +5,11 @@ from typing import Any, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from app.core.config import settings
-from app.rag.generator import generate_answer_from_results
+from app.rag.generator import (
+	build_follow_up_answer,
+	generate_answer_from_results,
+	needs_follow_up,
+)
 from app.rag.retriever import SearchResult, semantic_search
 
 
@@ -63,7 +67,15 @@ def chat(query: str) -> dict[str, Any]:
 	if not query or not query.strip():
 		raise ValueError("Query cannot be empty.")
 
-	result = chat_graph.invoke({"query": query.strip()})
+	clean_query = query.strip()
+	if needs_follow_up(clean_query):
+		return {
+			"answer": build_follow_up_answer(clean_query),
+			"sources": [],
+			"retrieved_count": 0,
+		}
+
+	result = chat_graph.invoke({"query": clean_query})
 	return {
 		"answer": result.get("answer", "No relevant information found in the support documents."),
 		"sources": result.get("sources", []),

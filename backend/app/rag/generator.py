@@ -9,10 +9,81 @@ from app.core.config import settings
 from app.rag.retriever import SearchResult, semantic_search
 
 
+GENERIC_FOLLOW_UP_TOKENS = {
+    "help",
+    "issue",
+    "problem",
+    "vehicle",
+    "truck",
+    "car",
+    "works",
+    "not working",
+    "something",
+    "please",
+    "my",
+}
+
+SPECIFIC_CONTEXT_TOKENS = {
+    "dtc",
+    "fault",
+    "code",
+    "warning",
+    "battery",
+    "engine",
+    "electrical",
+    "brake",
+    "sensor",
+    "ac",
+    "hvac",
+    "oil",
+    "fuel",
+    "suspension",
+    "airbag",
+    "door",
+    "lock",
+    "starter",
+    "charging",
+    "overheating",
+    "vibration",
+    "noise",
+    "monitor",
+    "camera",
+}
+
+
 @dataclass(frozen=True)
 class Answer:
 	text: str
 	sources: list[dict]
+
+
+def needs_follow_up(query: str) -> bool:
+	"""Return True when the user query is too vague to answer accurately."""
+	if not query or not query.strip():
+		return False
+
+	text = query.strip().lower()
+	words = text.split()
+	if len(words) <= 4:
+		return True
+
+	icontains_specific_token = any(token in text for token in SPECIFIC_CONTEXT_TOKENS)
+	icontains_generic_phrase = any(token in text for token in GENERIC_FOLLOW_UP_TOKENS)
+	if icontains_specific_token and not icontains_generic_phrase:
+		return False
+	if icontains_specific_token and icontains_generic_phrase:
+		return False
+	return True
+
+
+def build_follow_up_answer(query: str) -> str:
+	"""Generate a short clarifying prompt for unresolved vague issues."""
+	return (
+		"I can help, but I need a bit more detail to give the right fix. "
+		"Please tell me: 1) which vehicle / model / year, 2) the exact symptom or issue, "
+		"and 3) any warning light, DTC code, or when it happens. "
+		"If you share those details, I can narrow the likely cause and recommend the right next step."
+	)
 
 
 def answer_question(query: str) -> Answer:

@@ -13,7 +13,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-        buildConfigField("String", "FF_BACKEND_URL", "\"${project.findProperty("ffBackendUrl") ?: "http://10.0.2.2:8000/"}\"")
+        buildConfigField("String", "FF_BACKEND_URL", "\"${project.findProperty("ffBackendUrl") ?: "http://10.160.54.23:8000/"}\"")
     }
 
     compileOptions {
