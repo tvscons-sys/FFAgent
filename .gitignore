@@ -7,6 +7,9 @@ backend/storage/
 *.pyc
 .env
 
+# Local source documents used for ingestion
+data/
+
 # Android ignores
 android-sdk/.gradle/
 android-sdk/**/build/
