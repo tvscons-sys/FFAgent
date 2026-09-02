@@ -24,6 +24,7 @@
     <string name="ticket_raised_body">Our support team will get back to you shortly. Reference ID: %1$s</string>
     <string name="attach">Attach a file</string>
     <string name="voice_input">Voice input</string>
+    <string name="voice_not_available">Voice input is not available on this device.</string>
     <string name="you">YOU</string>
     <string name="ff_assistant">FF ASSISTANT</string>
 </resources>

@@ -1,8 +1,12 @@
 package com.ffassistant.sdk.ui
 
+import android.Manifest
 import android.app.AlertDialog
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.Context
 import android.os.Bundle
+import android.speech.RecognizerIntent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +14,7 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
@@ -27,6 +32,8 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import java.util.UUID
+
+private const val VOICE_REQUEST_CODE = 701
 
 private const val PREFS = "ff_assistant_cache"
 private const val KEY_DARK_MODE = "dark_mode_enabled"
@@ -57,8 +64,41 @@ class ChatActivity : AppCompatActivity() {
         binding.send.setOnClickListener { sendMessage() }
         binding.backButton.setOnClickListener { finish() }
         binding.menuButton.setOnClickListener { showOverflowMenu(it) }
-        // TODO: wire attachButton/micButton to real file-picker and speech-to-text
-        // flows when those capabilities are added to the backend contract.
+        binding.micButton.setOnClickListener { startVoiceInput() }
+    }
+
+    private fun startVoiceInput() {
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), VOICE_REQUEST_CODE)
+            return
+        }
+
+        val voiceIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_PROMPT, getString(R.string.voice_input))
+        }
+        if (voiceIntent.resolveActivity(packageManager) == null) {
+            Toast.makeText(this, R.string.voice_not_available, Toast.LENGTH_SHORT).show()
+            return
+        }
+        startActivityForResult(voiceIntent, VOICE_REQUEST_CODE)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == VOICE_REQUEST_CODE && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+            startVoiceInput()
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == VOICE_REQUEST_CODE && resultCode == RESULT_OK) {
+            data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull()
+                ?.let { binding.input.setText(it) }
+        }
     }
 
     private fun applyPersistedTheme() {
