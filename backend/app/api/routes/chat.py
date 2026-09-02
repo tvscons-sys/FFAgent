@@ -22,5 +22,5 @@ def chat_endpoint(request: ChatRequest) -> ChatResponse:
             )
             for item in result.get("sources", [])
         ],
-        retrieved_count=len(result.get("sources", [])),
+        retrieved_count=int(result.get("retrieved_count", len(result.get("sources", [])))),
     )

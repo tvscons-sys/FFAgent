@@ -71,7 +71,7 @@ def chat(query: str) -> dict[str, Any]:
         return {
             "answer": build_greeting_answer(),
             "sources": [],
-            "retrieved_count": 0,
+            "retrieved_count": -1,
         }
 
     result = chat_graph.invoke({"query": clean_query})
