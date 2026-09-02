@@ -11,6 +11,9 @@ from langchain_core.documents import Document
 from app.core.config import settings
 from app.rag.embeddings import create_embeddings
 
+# Global cache for retriever (keeps ChromaDB connection in memory)
+_retriever_cache: Chroma | None = None
+
 
 @dataclass(frozen=True)
 class SearchResult:
@@ -19,16 +22,20 @@ class SearchResult:
 
 
 def create_retriever() -> Chroma:
-	"""Open the existing persisted Chroma collection without re-indexing it."""
-	persist_directory = settings.chroma_persist_directory
-	if not persist_directory.is_absolute():
-		persist_directory = Path.cwd() / persist_directory
-	return Chroma(
-		collection_name=settings.chroma_collection,
-		embedding_function=create_embeddings(),
-		persist_directory=str(persist_directory),
-		client_settings=ChromaSettings(anonymized_telemetry=False),
-	)
+	"""Open the existing persisted Chroma collection (cached after first call)."""
+	global _retriever_cache
+	if _retriever_cache is None:
+		print("🔄 Loading ChromaDB collection (first request, will cache)...")
+		persist_directory = settings.chroma_persist_directory
+		if not persist_directory.is_absolute():
+			persist_directory = Path.cwd() / persist_directory
+		_retriever_cache = Chroma(
+			collection_name=settings.chroma_collection,
+			embedding_function=create_embeddings(),
+			persist_directory=str(persist_directory),
+			client_settings=ChromaSettings(anonymized_telemetry=False),
+		)
+	return _retriever_cache
 
 
 def semantic_search(
