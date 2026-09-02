@@ -30,7 +30,7 @@ POST http://127.0.0.1:8000/chat
 Content-Type: application/json
 
 {
-  "query": "my vehicle is not working"
+  "query": "why trips are missing"
 }
 
 ### Chat request - vague but still specific enough for normal answer
