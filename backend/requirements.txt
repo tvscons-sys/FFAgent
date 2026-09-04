@@ -7,10 +7,11 @@ langchain-community==0.3.14
 langchain-text-splitters==0.3.5
 langchain-google-genai==2.0.8
 sentence-transformers==3.3.1
-langchain-huggingface==0.1.2
+langchain-huggingface>=0.1.2
+tokenizers>=0.21.0
 langgraph==0.2.62
-chromadb==0.5.23
-langchain-chroma==0.2.2
+chromadb>=0.6.0
+langchain-chroma>=0.2.2
 pypdf==5.1.0
 docx2txt==0.8
 openpyxl==3.1.5
