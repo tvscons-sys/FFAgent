@@ -24,6 +24,10 @@ GREETING_WORDS = {
 class Answer:
     text: str
     sources: list[dict]
+    model: str = ""
+    input_tokens: int = 0
+    output_tokens: int = 0
+    estimated_cost_inr: float = 0.0
 
 
 def build_greeting_answer() -> str:
@@ -50,10 +54,17 @@ def generate_answer_from_results(query: str, retrieved: list[SearchResult]) -> A
         )
 
     context_text = _build_context(retrieved)
-    answer_text = _generate_answer(query, context_text)
+    generation = _generate_answer(query, context_text)
     sources = _extract_sources(retrieved)
 
-    return Answer(text=answer_text, sources=sources)
+    return Answer(
+        text=generation["text"],
+        sources=sources,
+        model=generation["model"],
+        input_tokens=generation["input_tokens"],
+        output_tokens=generation["output_tokens"],
+        estimated_cost_inr=generation["estimated_cost_inr"],
+    )
 
 
 def _build_context(results: list[SearchResult]) -> str:
@@ -78,7 +89,7 @@ def _build_context(results: list[SearchResult]) -> str:
     return "\n".join(lines)
 
 
-def _generate_answer(query: str, context: str) -> str:
+def _generate_answer(query: str, context: str) -> dict:
     """Send the grounded prompt to Gemini and extract the answer."""
     client = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
@@ -156,7 +167,20 @@ def _generate_answer(query: str, context: str) -> str:
     )
 
     response = client.invoke([system_prompt, user_prompt])
-    return _format_answer(response.content)
+    usage = getattr(response, "usage_metadata", None) or {}
+    input_tokens = int(usage.get("input_tokens", 0) or max(1, len(query + context) // 4))
+    output_tokens = int(usage.get("output_tokens", 0) or max(1, len(str(response.content)) // 4))
+    cost = (
+        input_tokens * settings.gemini_input_cost_inr_per_million
+        + output_tokens * settings.gemini_output_cost_inr_per_million
+    ) / 1_000_000
+    return {
+        "text": _format_answer(response.content),
+        "model": settings.gemini_model,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "estimated_cost_inr": cost,
+    }
 
 
 def _format_answer(text: str) -> str:

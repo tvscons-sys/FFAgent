@@ -12,12 +12,15 @@ class Settings(BaseSettings):
     data_dir: Path = Path("../data")
     chroma_persist_directory: Path = Path("./storage/chroma")
     chroma_collection: str = "ff_support_documents"
+    admin_metrics_database: Path = Path("./storage/admin_metrics.sqlite3")
     hf_embedding_model: str = "BAAI/bge-small-en-v1.5"
     hf_embedding_device: str = "cpu"
     hf_normalize_embeddings: bool = True
     hf_embedding_dimension: int = 384
     google_api_key: str = ""
     gemini_model: str = "gemini-2.0-flash"
+    gemini_input_cost_inr_per_million: float = 0.0
+    gemini_output_cost_inr_per_million: float = 0.0
     chunk_size: int = 800
     chunk_overlap: int = 120
     retrieval_top_k: int = 4
