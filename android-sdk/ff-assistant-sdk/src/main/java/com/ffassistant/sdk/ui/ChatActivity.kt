@@ -3,16 +3,16 @@ package com.ffassistant.sdk.ui
 import android.Manifest
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.pm.PackageManager
 import android.content.Context
 import android.view.Gravity
 import android.os.Bundle
 import android.speech.RecognizerIntent
-import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupMenu
@@ -143,9 +143,9 @@ class ChatActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val isDark = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
         PopupMenu(this, anchor).apply {
-            menu.add(0, R.id.menu_raise_ticket, 0, getString(R.string.raise_ticket))
-            menu.add(0, R.id.menu_clear_chat, 1, getString(R.string.clear_chat))
-            menu.add(0, R.id.menu_theme, 2, if (isDark) getString(R.string.light_mode) else getString(R.string.dark_mode))
+            menu.add(0, R.id.menu_raise_ticket, 0, getString(R.string.raise_ticket)).setIcon(R.drawable.ic_ticket)
+            menu.add(0, R.id.menu_clear_chat, 1, getString(R.string.clear_chat)).setIcon(R.drawable.ic_delete)
+            menu.add(0, R.id.menu_theme, 2, if (isDark) getString(R.string.light_mode) else getString(R.string.dark_mode)).setIcon(R.drawable.ic_theme)
             setOnMenuItemClickListener {
                 when (it.itemId) {
                     R.id.menu_raise_ticket -> raiseTicket(null)
@@ -160,6 +160,13 @@ class ChatActivity : AppCompatActivity() {
                     }
                 }
                 true
+            }
+            try {
+                val method = PopupMenu::class.java.getDeclaredMethod("setForceShowIcon", Boolean::class.javaPrimitiveType)
+                method.isAccessible = true
+                method.invoke(this, true)
+            } catch (_: ReflectiveOperationException) {
+                // Older Android PopupMenu implementations may not expose icon support.
             }
             show()
         }
@@ -195,43 +202,52 @@ class ChatActivity : AppCompatActivity() {
         binding.send.isEnabled = false
 
         lifecycleScope.launch {
-            val result = repository.send(trimmed)
-            val responseText: String
-            val retrievedCount: Int
-            val suggestions: List<String>
+            try {
+                val result = repository.send(trimmed)
+                val responseText: String
+                val retrievedCount: Int
+                val suggestions: List<String>
 
-            when (result) {
-                is AssistantResult.Success -> {
-                    val body = result.value
-                    responseText = body.answer
-                    retrievedCount = body.retrieved_count
-                    suggestions = body.suggestions
+                when (result) {
+                    is AssistantResult.Success -> {
+                        val body = result.value
+                        responseText = body.answer
+                        retrievedCount = body.retrieved_count
+                        suggestions = body.suggestions
+                    }
+                    is AssistantResult.Failure -> {
+                        responseText = result.error.userMessage
+                        retrievedCount = 0
+                        suggestions = emptyList()
+                    }
                 }
-                is AssistantResult.Failure -> {
-                    responseText = result.error.userMessage
-                    retrievedCount = 0
-                    suggestions = emptyList()
+
+                if (suggestions.isNotEmpty()) {
+                    quickSuggestions.clear()
+                    quickSuggestions.addAll(
+                        suggestions
+                            .filterNot { it == SERVICE_REMINDER_QUESTION || it == CLOUD_CONNECTION_QUESTION }
+                            .take(MAX_SUGGESTIONS)
+                    )
+                    repository.saveSuggestions(quickSuggestions)
+                    adapter.setSuggestions(quickSuggestions)
                 }
-            }
 
-            if (suggestions.isNotEmpty()) {
-                quickSuggestions.clear()
-                quickSuggestions.addAll(
-                    suggestions
-                        .filterNot { it == SERVICE_REMINDER_QUESTION || it == CLOUD_CONNECTION_QUESTION }
-                        .take(MAX_SUGGESTIONS)
-                )
-                repository.saveSuggestions(quickSuggestions)
-                adapter.setSuggestions(quickSuggestions)
+                val assistantMessage = repository.assistantMessage(responseText, retrievedCount)
+                messages += assistantMessage
+                repository.saveMessage(assistantMessage)
+                adapter.notifyItemInserted(messages.lastIndex)
+                binding.messages.scrollToPosition(messages.lastIndex)
+            } catch (_: Exception) {
+                val errorMessage = repository.assistantMessage(getString(R.string.chat_retry_message), 0)
+                messages += errorMessage
+                repository.saveMessage(errorMessage)
+                adapter.notifyItemInserted(messages.lastIndex)
+                binding.messages.scrollToPosition(messages.lastIndex)
+            } finally {
+                binding.loading.visibility = View.GONE
+                binding.send.isEnabled = true
             }
-
-            val assistantMessage = repository.assistantMessage(responseText, retrievedCount)
-            messages += assistantMessage
-            repository.saveMessage(assistantMessage)
-            adapter.notifyItemInserted(messages.lastIndex)
-            binding.messages.scrollToPosition(messages.lastIndex)
-            binding.loading.visibility = View.GONE
-            binding.send.isEnabled = true
         }
     }
 
@@ -246,11 +262,18 @@ class ChatActivity : AppCompatActivity() {
         messages[index] = updated
         repository.updateMessage(updated)
         adapter.notifyItemChanged(index)
+        if (feedback == Feedback.UP) {
+            showRatingDialog()
+        }
         // TODO: wire to your analytics/feedback endpoint once one exists;
         // the backend contract in this project doesn't define one yet.
     }
 
     private fun raiseTicket(message: ChatMessage?) {
+        if (message == null) {
+            showManualTicketDialog()
+            return
+        }
         val assistantIndex = message?.let { selected ->
             messages.indexOfFirst { item -> item.id == selected.id }
         } ?: -1
@@ -261,47 +284,140 @@ class ChatActivity : AppCompatActivity() {
         } else {
             messages.lastOrNull { it.sender == Sender.USER }?.text
         }
-        val answer = message?.text ?: getString(R.string.ticket_default_summary)
+        val answer = message?.text
+            ?: messages.lastOrNull { it.sender == Sender.ASSISTANT }?.text
+            ?: getString(R.string.ticket_default_summary)
         val summary = listOfNotNull(
             userQuestion?.let { "Question: $it" },
             "Assistant response: $answer"
         ).joinToString("\n\n")
-        val description = EditText(this).apply {
-            setText(summary)
-            setSelection(text.length)
-            minLines = 5
-            maxLines = 10
-            gravity = Gravity.TOP or Gravity.START
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or
-                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-            hint = getString(R.string.ticket_description_hint)
-        }
-        val content = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(24, 0, 24, 0)
-            addView(description, LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ))
-        }
-        val referenceId = UUID.randomUUID().toString().take(8).uppercase()
+        val content = layoutInflater.inflate(R.layout.dialog_ticket_review, null)
+        val description = content.findViewById<android.widget.EditText>(R.id.ticketDescription)
+        description.setText(summary)
+        description.setSelection(description.text.length)
         val dialog = AlertDialog.Builder(this)
-            .setTitle(R.string.ticket_review_title)
             .setView(content)
-            .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.raise_ticket, null)
             .create()
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                dialog.dismiss()
-                AlertDialog.Builder(this)
-                    .setTitle(R.string.ticket_raised_title)
-                    .setMessage(getString(R.string.ticket_raised_body, referenceId))
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show()
-            }
+        content.findViewById<View>(R.id.cancelTicket).setOnClickListener { dialog.dismiss() }
+        val submitButton = content.findViewById<MaterialButton>(R.id.submitTicket)
+        submitButton.setOnClickListener {
+            submitTicket(
+                dialog = dialog,
+                submitButton = submitButton,
+                title = userQuestion ?: getString(R.string.ticket_default_title),
+                description = description.text.toString().trim(),
+                source = "chat"
+            )
         }
         dialog.show()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.92).toInt(),
+            android.view.WindowManager.LayoutParams.WRAP_CONTENT
+        )
+    }
+
+    private fun showManualTicketDialog() {
+        val content = layoutInflater.inflate(R.layout.dialog_ticket_manual, null)
+        val title = content.findViewById<android.widget.EditText>(R.id.ticketTitle)
+        val description = content.findViewById<android.widget.EditText>(R.id.ticketDescription)
+        val dialog = AlertDialog.Builder(this)
+            .setView(content)
+            .create()
+
+        content.findViewById<View>(R.id.cancelTicket).setOnClickListener { dialog.dismiss() }
+        val submitButton = content.findViewById<MaterialButton>(R.id.submitTicket)
+        submitButton.setOnClickListener {
+            val issueTitle = title.text.toString().trim()
+            val issueDescription = description.text.toString().trim()
+            if (issueTitle.isEmpty()) {
+                title.error = getString(R.string.ticket_title_required)
+                title.requestFocus()
+                return@setOnClickListener
+            }
+            if (issueDescription.isEmpty()) {
+                description.error = getString(R.string.ticket_description_required)
+                description.requestFocus()
+                return@setOnClickListener
+            }
+            submitTicket(dialog, submitButton, issueTitle, issueDescription, "menu")
+        }
+
+        dialog.show()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.92).toInt(),
+            android.view.WindowManager.LayoutParams.WRAP_CONTENT
+        )
+    }
+
+    private fun submitTicket(
+        dialog: AlertDialog,
+        submitButton: MaterialButton,
+        title: String,
+        description: String,
+        source: String
+    ) {
+        if (submitButton.isEnabled.not()) return
+        submitButton.isEnabled = false
+        submitButton.text = getString(R.string.ticket_submitting)
+        lifecycleScope.launch {
+            when (val result = repository.createTicket(title, description, source)) {
+                is AssistantResult.Success -> {
+                    dialog.dismiss()
+                    showTicketSuccess(result.value.reference_id)
+                }
+                is AssistantResult.Failure -> {
+                    submitButton.isEnabled = true
+                    submitButton.text = getString(R.string.raise_ticket)
+                    Toast.makeText(this@ChatActivity, result.error.userMessage, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private fun showTicketSuccess(referenceId: String) {
+        val content = layoutInflater.inflate(R.layout.dialog_ticket_success, null)
+        content.findViewById<TextView>(R.id.ticketReference).text = referenceId
+        val dialog = AlertDialog.Builder(this)
+            .setView(content)
+            .create()
+        content.findViewById<View>(R.id.copyTicketReference).setOnClickListener {
+            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText("Ticket reference", referenceId))
+            Toast.makeText(this, R.string.ticket_reference_copied, Toast.LENGTH_SHORT).show()
+        }
+        content.findViewById<View>(R.id.dismissTicket).setOnClickListener { dialog.dismiss() }
+        dialog.show()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.92).toInt(),
+            android.view.WindowManager.LayoutParams.WRAP_CONTENT
+        )
+    }
+
+    private fun showRatingDialog() {
+        val content = layoutInflater.inflate(R.layout.dialog_rating, null)
+        val dialog = AlertDialog.Builder(this)
+            .setView(content)
+            .create()
+        content.findViewById<View>(R.id.dismissRating).setOnClickListener { dialog.dismiss() }
+        content.findViewById<View>(R.id.submitRating).setOnClickListener {
+            val selected = content.findViewById<android.widget.RadioGroup>(R.id.ratingGroup)
+                .checkedRadioButtonId
+            if (selected == -1) {
+                Toast.makeText(this, R.string.rating_required, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            dialog.dismiss()
+            Toast.makeText(this, R.string.rating_thanks, Toast.LENGTH_SHORT).show()
+        }
+        dialog.show()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.92).toInt(),
+            android.view.WindowManager.LayoutParams.WRAP_CONTENT
+        )
     }
 }
 

@@ -18,6 +18,7 @@ async function loadMetrics() {
     setText('estimated-cost', metrics.estimated_cost_inr ? `₹${format(metrics.estimated_cost_inr, 4)}` : 'Free tier');
     setText('average-latency', `${format(metrics.average_latency_ms)}ms`);
     setText('retrieval-latency', `${format(metrics.average_retrieval_latency_ms)}ms`);
+    setText('ticket-count', format(metrics.ticket_count));
     renderRows(data.recent_questions || []);
   } catch (error) {
     setText('metrics-status', 'Backend offline');

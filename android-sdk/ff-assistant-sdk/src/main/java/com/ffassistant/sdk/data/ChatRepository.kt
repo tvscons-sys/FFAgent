@@ -6,6 +6,7 @@ import com.ffassistant.sdk.network.AssistantResult
 import com.ffassistant.sdk.network.ChatMessage
 import com.ffassistant.sdk.network.ChatRequest
 import com.ffassistant.sdk.network.Sender
+import com.ffassistant.sdk.network.TicketRequest
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.UUID
@@ -35,6 +36,10 @@ internal class ChatRepository(context: Context) {
 
     suspend fun send(text: String): AssistantResult<com.ffassistant.sdk.network.ChatResponse> {
         return FfAssistant.service.sendMessage(ChatRequest(query = text))
+    }
+
+    suspend fun createTicket(title: String, description: String, source: String): AssistantResult<com.ffassistant.sdk.network.TicketResponse> {
+        return FfAssistant.service.createTicket(TicketRequest(title, description, source))
     }
 
     fun updateMessage(message: ChatMessage) {

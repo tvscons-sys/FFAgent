@@ -41,7 +41,7 @@
                 android:textSize="30sp"
                 android:fontFamily="sans-serif-condensed"
                 android:textStyle="bold"
-                android:textColor="@color/ff_brand_title" />
+                android:textColor="@color/ff_cyan_900" />
 
             <TextView
                 android:layout_width="match_parent"

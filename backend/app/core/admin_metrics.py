@@ -116,6 +116,19 @@ def record_chat(event: dict[str, Any]) -> None:
         pass
 
 
+def record_ticket(title: str, description: str, source: str = "chat") -> str:
+    """Persist a submitted support ticket and return its human-readable reference."""
+    _initialize()
+    with _connect() as connection:
+        cursor = connection.execute(
+            """INSERT INTO support_tickets
+            (created_at, issue, category, priority, status)
+            VALUES (?, ?, ?, ?, ?)""",
+            (_now(), f"{title}\n\n{description}", source, "normal", "submitted"),
+        )
+        return f"TKT-{cursor.lastrowid:06d}"
+
+
 def dashboard(days: int = 30) -> dict[str, Any]:
     _initialize()
     with _connect() as connection:
@@ -123,6 +136,10 @@ def dashboard(days: int = 30) -> dict[str, Any]:
             "SELECT * FROM chat_events WHERE created_at >= datetime('now', ?) ORDER BY id DESC",
             (f"-{days} days",),
         ).fetchall()
+        ticket_count = connection.execute(
+            "SELECT COUNT(*) FROM support_tickets WHERE created_at >= datetime('now', ?)",
+            (f"-{days} days",),
+        ).fetchone()[0]
     events = [dict(row) for row in rows]
     total = len(events)
     input_tokens = sum(row["input_tokens"] for row in events)
@@ -138,6 +155,7 @@ def dashboard(days: int = 30) -> dict[str, Any]:
             "average_latency_ms": round(sum(row["latency_ms"] for row in events) / total, 1) if total else 0,
             "average_retrieval_latency_ms": round(sum(row["retrieval_latency_ms"] for row in events) / total, 1) if total else 0,
             "average_chunks": round(sum(row["retrieved_count"] for row in events) / total, 1) if total else 0,
+            "ticket_count": ticket_count,
         },
         "recent_questions": [
             {**row, "sources": json.loads(row.pop("sources_json"))} for row in events[:20]

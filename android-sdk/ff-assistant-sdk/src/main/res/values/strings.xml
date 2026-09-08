@@ -25,6 +25,14 @@
     <string name="ticket_review_title">Review your support ticket</string>
     <string name="ticket_description_hint">Edit the issue summary before raising the ticket</string>
     <string name="ticket_default_summary">Please describe the issue you need help with.</string>
+    <string name="ticket_title_required">Enter an issue title</string>
+    <string name="ticket_description_required">Describe the issue before raising the ticket</string>
+    <string name="ticket_default_title">Support issue</string>
+    <string name="ticket_submitting">Submitting...</string>
+    <string name="chat_retry_message">We could not reach support right now. Please check your connection and try again.</string>
+    <string name="ticket_reference_copied">Ticket reference copied</string>
+    <string name="rating_required">Choose a rating first</string>
+    <string name="rating_thanks">Thank you for rating your conversation with us.</string>
     <string name="attach">Attach a file</string>
     <string name="voice_input">Voice input</string>
     <string name="voice_not_available">Voice input is not available on this device.</string>

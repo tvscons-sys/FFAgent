@@ -8,6 +8,9 @@ import retrofit2.http.POST
 interface AssistantApi {
     @POST("chat")
     suspend fun chat(@Body request: ChatRequest): Response<ChatResponse>
+
+    @POST("tickets")
+    suspend fun createTicket(@Body request: TicketRequest): Response<TicketResponse>
 }
 
 data class ChatRequest(
@@ -27,6 +30,17 @@ data class ChatResponse(
     val retrieved_count: Int = 0,
     val suggestions: List<String> = emptyList(),
     val faq_match: Boolean = false
+)
+
+data class TicketRequest(
+    val title: String,
+    val description: String,
+    val source: String = "chat"
+)
+
+data class TicketResponse(
+    val reference_id: String,
+    val status: String
 )
 
 data class ChatMessage(

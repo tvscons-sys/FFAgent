@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_ticket_dialog"
+    android:padding="20dp">
+
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="10dp"
+        android:background="@drawable/bg_avatar"
+        android:src="@drawable/ic_check_circle"
+        android:contentDescription="@null" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Thank you for your feedback"
+        android:textColor="@color/ff_ink"
+        android:textSize="19sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="How would you rate your conversation with us?"
+        android:textColor="@color/ff_muted"
+        android:textSize="15sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Your feedback helps us improve support."
+        android:textColor="@color/ff_muted"
+        android:textSize="13sp" />
+
+    <RadioGroup
+        android:id="@+id/ratingGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/rating1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1"
+            android:buttonTint="@color/ff_cyan_700"
+            android:textColor="@color/ff_ink" />
+
+        <RadioButton
+            android:id="@+id/rating2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2"
+            android:buttonTint="@color/ff_cyan_700"
+            android:textColor="@color/ff_ink" />
+
+        <RadioButton
+            android:id="@+id/rating3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3"
+            android:buttonTint="@color/ff_cyan_700"
+            android:textColor="@color/ff_ink" />
+
+        <RadioButton
+            android:id="@+id/rating4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="4"
+            android:buttonTint="@color/ff_cyan_700"
+            android:textColor="@color/ff_ink" />
+
+        <RadioButton
+            android:id="@+id/rating5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="5"
+            android:buttonTint="@color/ff_cyan_700"
+            android:textColor="@color/ff_ink" />
+    </RadioGroup>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dismissRating"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Not now"
+            android:textAllCaps="false"
+            android:textColor="@color/ff_muted" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/submitRating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Submit rating"
+            android:textAllCaps="false"
+            android:textColor="@color/ff_surface"
+            app:backgroundTint="@color/ff_cyan_700"
+            app:cornerRadius="18dp" />
+    </LinearLayout>
+</LinearLayout>
