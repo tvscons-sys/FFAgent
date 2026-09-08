@@ -45,4 +45,15 @@ internal class ChatRepository(context: Context) {
     fun userMessage(text: String) = ChatMessage(UUID.randomUUID().toString(), text, Sender.USER)
     fun assistantMessage(text: String, retrievedCount: Int = -1) =
         ChatMessage(UUID.randomUUID().toString(), text, Sender.ASSISTANT, retrievedCount = retrievedCount)
+
+    fun saveSuggestions(suggestions: List<String>) {
+        preferences.edit().putString("suggestions", gson.toJson(suggestions)).apply()
+    }
+
+    fun loadSuggestions(): List<String> {
+        val json = preferences.getString("suggestions", null) ?: return emptyList()
+        return runCatching {
+            gson.fromJson<List<String>>(json, object : TypeToken<List<String>>() {}.type)
+        }.getOrDefault(emptyList())
+    }
 }

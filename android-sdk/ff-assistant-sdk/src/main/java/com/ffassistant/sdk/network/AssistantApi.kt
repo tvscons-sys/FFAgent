@@ -24,7 +24,9 @@ data class ChatSource(
 data class ChatResponse(
     val answer: String,
     val sources: List<ChatSource> = emptyList(),
-    val retrieved_count: Int = 0
+    val retrieved_count: Int = 0,
+    val suggestions: List<String> = emptyList(),
+    val faq_match: Boolean = false
 )
 
 data class ChatMessage(

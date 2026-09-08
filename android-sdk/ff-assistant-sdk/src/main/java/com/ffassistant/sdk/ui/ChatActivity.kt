@@ -5,11 +5,14 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.Context
+import android.view.Gravity
 import android.os.Bundle
 import android.speech.RecognizerIntent
+import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupMenu
@@ -34,6 +37,17 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 private const val VOICE_REQUEST_CODE = 701
+private const val MAX_SUGGESTIONS = 5
+private const val WELCOME_MESSAGE = "Hi there! I’m here to help with your Flying Flea support."
+private const val SERVICE_REMINDER_QUESTION = "Why is the service reminder still showing?"
+private const val CLOUD_CONNECTION_QUESTION = "Why is my vehicle not connecting to the cloud?"
+private val DEFAULT_SUGGESTIONS = listOf(
+    "Why is my map not working?",
+    "Why am I not getting the OTP?",
+    "Why is the call screen missing?",
+    "Why is my vehicle data not syncing?",
+    "Why does my Wi-Fi disconnect when I open the app?"
+)
 
 private const val PREFS = "ff_assistant_cache"
 private const val KEY_DARK_MODE = "dark_mode_enabled"
@@ -43,6 +57,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var repository: ChatRepository
     private val messages = mutableListOf<ChatMessage>()
     private lateinit var adapter: MessageAdapter
+    private val quickSuggestions = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         applyPersistedTheme()
@@ -51,7 +66,7 @@ class ChatActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         repository = ChatRepository(FfAssistant.context())
-        adapter = MessageAdapter(messages, ::onFeedback, ::raiseTicket)
+        adapter = MessageAdapter(messages, ::onFeedback, ::raiseTicket, ::submitQuestion)
         binding.messages.layoutManager = LinearLayoutManager(this)
         binding.messages.adapter = adapter
 
@@ -59,7 +74,21 @@ class ChatActivity : AppCompatActivity() {
         if (cachedMessages.isNotEmpty()) {
             messages.addAll(cachedMessages)
             adapter.notifyDataSetChanged()
+        } else {
+            val welcome = repository.assistantMessage(WELCOME_MESSAGE, -1)
+            messages.add(welcome)
+            repository.saveMessage(welcome)
+            adapter.notifyItemInserted(messages.lastIndex)
         }
+
+        quickSuggestions.clear()
+        val cachedSuggestions = repository.loadSuggestions()
+        quickSuggestions.addAll(
+            (cachedSuggestions.ifEmpty { DEFAULT_SUGGESTIONS })
+                .filterNot { it == SERVICE_REMINDER_QUESTION || it == CLOUD_CONNECTION_QUESTION }
+                .take(MAX_SUGGESTIONS)
+        )
+        adapter.setSuggestions(quickSuggestions)
 
         binding.send.setOnClickListener { sendMessage() }
         binding.backButton.setOnClickListener { finish() }
@@ -116,13 +145,11 @@ class ChatActivity : AppCompatActivity() {
         PopupMenu(this, anchor).apply {
             menu.add(0, R.id.menu_raise_ticket, 0, getString(R.string.raise_ticket))
             menu.add(0, R.id.menu_clear_chat, 1, getString(R.string.clear_chat))
-            menu.add(0, R.id.menu_support_profile, 2, getString(R.string.support_profile))
-            menu.add(0, R.id.menu_theme, 3, if (isDark) getString(R.string.light_mode) else getString(R.string.dark_mode))
+            menu.add(0, R.id.menu_theme, 2, if (isDark) getString(R.string.light_mode) else getString(R.string.dark_mode))
             setOnMenuItemClickListener {
                 when (it.itemId) {
                     R.id.menu_raise_ticket -> raiseTicket(null)
                     R.id.menu_clear_chat -> confirmClearConversation()
-                    R.id.menu_support_profile -> showSupportProfile()
                     R.id.menu_theme -> {
                         val next = !isDark
                         prefs.edit().putBoolean(KEY_DARK_MODE, next).apply()
@@ -146,40 +173,56 @@ class ChatActivity : AppCompatActivity() {
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 repository.clearMessages()
                 messages.clear()
+                val welcome = repository.assistantMessage(WELCOME_MESSAGE, -1)
+                messages.add(welcome)
+                repository.saveMessage(welcome)
                 adapter.notifyDataSetChanged()
             }
             .show()
     }
 
-    private fun showSupportProfile() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.profile_title)
-            .setMessage(R.string.profile_body)
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
-    }
+    private fun submitQuestion(text: String) {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty() || binding.loading.visibility == View.VISIBLE) return
 
-    private fun sendMessage() {
-        val text = binding.input.text.toString().trim()
-        if (text.isEmpty() || binding.loading.visibility == View.VISIBLE) return
-
-        val userMessage = repository.userMessage(text)
+        val userMessage = repository.userMessage(trimmed)
         messages += userMessage
         repository.saveMessage(userMessage)
         adapter.notifyItemInserted(messages.lastIndex)
         binding.messages.scrollToPosition(messages.lastIndex)
-        binding.input.text?.clear()
+        binding.input.setText("")
         binding.loading.visibility = View.VISIBLE
         binding.send.isEnabled = false
 
         lifecycleScope.launch {
-            val result = repository.send(text)
-            // retrievedCount == 0 means the RAG pipeline found no matching
-            // documents for this query; the UI (not the backend) decides to
-            // surface a "raise a ticket" prompt in that case.
-            val (responseText, retrievedCount) = when (result) {
-                is AssistantResult.Success -> result.value.answer to result.value.retrieved_count
-                is AssistantResult.Failure -> result.error.userMessage to 0
+            val result = repository.send(trimmed)
+            val responseText: String
+            val retrievedCount: Int
+            val suggestions: List<String>
+
+            when (result) {
+                is AssistantResult.Success -> {
+                    val body = result.value
+                    responseText = body.answer
+                    retrievedCount = body.retrieved_count
+                    suggestions = body.suggestions
+                }
+                is AssistantResult.Failure -> {
+                    responseText = result.error.userMessage
+                    retrievedCount = 0
+                    suggestions = emptyList()
+                }
+            }
+
+            if (suggestions.isNotEmpty()) {
+                quickSuggestions.clear()
+                quickSuggestions.addAll(
+                    suggestions
+                        .filterNot { it == SERVICE_REMINDER_QUESTION || it == CLOUD_CONNECTION_QUESTION }
+                        .take(MAX_SUGGESTIONS)
+                )
+                repository.saveSuggestions(quickSuggestions)
+                adapter.setSuggestions(quickSuggestions)
             }
 
             val assistantMessage = repository.assistantMessage(responseText, retrievedCount)
@@ -190,6 +233,10 @@ class ChatActivity : AppCompatActivity() {
             binding.loading.visibility = View.GONE
             binding.send.isEnabled = true
         }
+    }
+
+    private fun sendMessage() {
+        submitQuestion(binding.input.text.toString())
     }
 
     private fun onFeedback(message: ChatMessage, feedback: Feedback) {
@@ -204,15 +251,57 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun raiseTicket(message: ChatMessage?) {
+        val assistantIndex = message?.let { selected ->
+            messages.indexOfFirst { item -> item.id == selected.id }
+        } ?: -1
+        val userQuestion = if (assistantIndex > 0) {
+            messages.subList(0, assistantIndex)
+                .lastOrNull { it.sender == Sender.USER }
+                ?.text
+        } else {
+            messages.lastOrNull { it.sender == Sender.USER }?.text
+        }
+        val answer = message?.text ?: getString(R.string.ticket_default_summary)
+        val summary = listOfNotNull(
+            userQuestion?.let { "Question: $it" },
+            "Assistant response: $answer"
+        ).joinToString("\n\n")
+        val description = EditText(this).apply {
+            setText(summary)
+            setSelection(text.length)
+            minLines = 5
+            maxLines = 10
+            gravity = Gravity.TOP or Gravity.START
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            hint = getString(R.string.ticket_description_hint)
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(24, 0, 24, 0)
+            addView(description, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ))
+        }
         val referenceId = UUID.randomUUID().toString().take(8).uppercase()
-        // TODO: replace with a real POST to your ticketing backend/CRM.
-        // This is intentionally UI-only per the current scope: the button
-        // and confirmation flow are wired, the network call is not.
-        AlertDialog.Builder(this)
-            .setTitle(R.string.ticket_raised_title)
-            .setMessage(getString(R.string.ticket_raised_body, referenceId))
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.ticket_review_title)
+            .setView(content)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.raise_ticket, null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                dialog.dismiss()
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.ticket_raised_title)
+                    .setMessage(getString(R.string.ticket_raised_body, referenceId))
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
+            }
+        }
+        dialog.show()
     }
 }
 
@@ -222,8 +311,16 @@ private const val VIEW_TYPE_ASSISTANT = 1
 private class MessageAdapter(
     private val items: List<ChatMessage>,
     private val onFeedback: (ChatMessage, Feedback) -> Unit,
-    private val onRaiseTicket: (ChatMessage) -> Unit
+    private val onRaiseTicket: (ChatMessage) -> Unit,
+    private val onSuggestionClick: (String) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+    private var suggestions: List<String> = emptyList()
+
+    fun setSuggestions(value: List<String>) {
+        suggestions = value.take(MAX_SUGGESTIONS)
+        notifyItemChanged(0)
+    }
 
     class UserHolder(view: View) : RecyclerView.ViewHolder(view)
     class AssistantHolder(view: View) : RecyclerView.ViewHolder(view)
@@ -260,10 +357,39 @@ private class MessageAdapter(
         val textView = card.findViewById<TextView>(R.id.messageText)
         textView.text = message.text
 
+        val suggestionContainer = card.findViewById<LinearLayout>(R.id.quickSuggestionsContainer)
+        suggestionContainer.removeAllViews()
+        val showSuggestions = message.retrievedCount == -1 && suggestions.isNotEmpty()
+        suggestionContainer.visibility = if (showSuggestions) View.VISIBLE else View.GONE
+        if (showSuggestions) {
+            suggestions.forEach { suggestion ->
+                val chip = MaterialButton(holder.itemView.context).apply {
+                    text = suggestion
+                    isAllCaps = false
+                    gravity = Gravity.CENTER_VERTICAL or Gravity.START
+                    setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium)
+                    minHeight = 0
+                    minWidth = 0
+                    setPadding(20, 12, 20, 12)
+                    setBackgroundColor(context.getColor(R.color.ff_surface))
+                    setTextColor(context.getColor(R.color.ff_ink))
+                    strokeWidth = 1
+                    strokeColor = context.getColorStateList(R.color.ff_line)
+                    cornerRadius = 18
+                    setOnClickListener { onSuggestionClick(suggestion) }
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    ).apply { bottomMargin = 8 }
+                }
+                suggestionContainer.addView(chip)
+            }
+        }
+
         val noAnswerBanner = card.findViewById<LinearLayout>(R.id.noAnswerBanner)
-        val foundNoAnswer = message.retrievedCount == 0
-        noAnswerBanner.visibility = if (foundNoAnswer) View.VISIBLE else View.GONE
-        if (foundNoAnswer) {
+            val needsTicket = message.retrievedCount >= 0 && message.feedback == Feedback.DOWN
+            noAnswerBanner.visibility = if (needsTicket) View.VISIBLE else View.GONE
+            if (needsTicket) {
             card.findViewById<MaterialButton>(R.id.inlineRaiseTicket).setOnClickListener {
                 onRaiseTicket(message)
             }
@@ -280,7 +406,10 @@ private class MessageAdapter(
                 thumbDown.isEnabled = true
             }
             else -> {
-                feedbackPrompt.setText(R.string.feedback_thanks)
+                    feedbackPrompt.setText(
+                        if (message.feedback == Feedback.UP) R.string.feedback_thanks
+                        else R.string.was_this_helpful
+                    )
                 thumbUp.isEnabled = false
                 thumbDown.isEnabled = false
             }

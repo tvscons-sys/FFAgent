@@ -7,6 +7,7 @@ from langgraph.graph import END, START, StateGraph
 
 from app.core.config import settings
 from app.core.admin_metrics import record_chat
+from app.rag.faq import FAQ_ITEMS, get_faq_suggestions, match_faq
 from app.rag.generator import (
     build_greeting_answer,
     generate_answer_from_results,
@@ -76,6 +77,8 @@ def chat(query: str) -> dict[str, Any]:
         raise ValueError("Query cannot be empty.")
 
     clean_query = query.strip()
+    suggestions = get_faq_suggestions()
+
     if clean_query.lower() in {"hi", "hello", "hey", "good morning", "good afternoon", "good evening"}:
         greeting = build_greeting_answer()
         record_chat({
@@ -95,6 +98,31 @@ def chat(query: str) -> dict[str, Any]:
             "answer": greeting,
             "sources": [],
             "retrieved_count": -1,
+            "suggestions": suggestions,
+            "faq_match": False,
+        }
+
+    faq_match = match_faq(clean_query)
+    if faq_match is not None:
+        record_chat({
+            "query": clean_query,
+            "answer": faq_match["answer"],
+            "model": "faq-rule",
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "estimated_cost_inr": 0,
+            "latency_ms": 0,
+            "retrieval_latency_ms": 0,
+            "retrieved_count": 0,
+            "sources": [],
+        })
+        return {
+            "answer": faq_match["answer"],
+            "sources": [],
+            "retrieved_count": 0,
+            "suggestions": suggestions,
+            "faq_match": True,
         }
 
     started = perf_counter()
@@ -103,6 +131,8 @@ def chat(query: str) -> dict[str, Any]:
         "answer": result.get("answer", "No relevant information found in the support documents."),
         "sources": result.get("sources", []),
         "retrieved_count": int(result.get("retrieved_count", 0)),
+        "suggestions": suggestions,
+        "faq_match": False,
     }
     input_tokens = int(result.get("input_tokens", 0))
     output_tokens = int(result.get("output_tokens", 0))

@@ -16,3 +16,5 @@ class ChatResponse(BaseModel):
     answer: str
     sources: list[ChatSource] = []
     retrieved_count: int = 0
+    suggestions: list[str] = []
+    faq_match: bool = False

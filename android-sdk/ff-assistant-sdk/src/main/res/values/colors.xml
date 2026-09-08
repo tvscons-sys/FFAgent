@@ -18,7 +18,7 @@
     <color name="ff_background">#F5FAF9</color>
     <color name="ff_line">#D8E8E5</color>
     <color name="ff_header_tagline">#B7F1E9</color>
-    <color name="ff_brand_title">#000000</color>
+    <color name="ff_brand_title">#B7F1E9</color>
 
     <color name="ff_success_bg">#E7F7F2</color>
     <color name="ff_success_border">#0EA5A0</color>

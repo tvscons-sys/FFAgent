@@ -39,6 +39,14 @@
             android:textSize="16sp"
             android:lineSpacingExtra="3dp" />
 
+        <LinearLayout
+            android:id="@+id/quickSuggestionsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical"
+            android:visibility="gone" />
+
         <!-- Shown only when retrieved_count == 0, i.e. the query wasn't
              covered by the knowledge base. -->
         <LinearLayout
