@@ -44,7 +44,7 @@ private const val CLOUD_CONNECTION_QUESTION = "Why is my vehicle not connecting 
 private val DEFAULT_SUGGESTIONS = listOf(
     "Why is my map not working?",
     "Why am I not getting the OTP?",
-    "Why is the call screen missing?",
+    "Why does the app log me out automatically?",
     "Why is my vehicle data not syncing?",
     "Why does my Wi-Fi disconnect when I open the app?"
 )

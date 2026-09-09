@@ -72,12 +72,13 @@ FAQ_ITEMS = [
         ),
     },
     {
-        "id": "fault_ticket_not_received",
-        "question": "Why was my fault not sent to GRID?",
-        "keywords": ["grid", "fault ticket", "ticket not received", "grafana", "fault report"],
+        "id": "app_logs_me_out",
+        "question": "Why does the app log me out automatically?",
+        "keywords": ["sign out", "logs me out", "logout", "auto sign out"],
         "answer": (
-            "Your fault was not sent to GRID because the vehicle was missed from the authorized vehicles filters.\n\n"
-            "Support tickets for these faults are only created for authorized customer vehicles."
+            "The app was logging you out automatically because of a network drop when returning to the home screen.\n\n"
+            "This caused a temporary connection failure, and the app mistakenly treated that failure as an invalid session, which forced you to be logged out.\n\n"
+            "An update has been released to fix this so that temporary connection issues no longer sign you out. The changes have already been pushed out, though it may take a little time to reach all Android and iOS devices through the standard app store update process."
         ),
     },
     {
