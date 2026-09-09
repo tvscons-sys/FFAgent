@@ -50,7 +50,7 @@ python -m scripts.ingest_documents
 Search the indexed chunks semantically before adding generation:
 
 ```powershell
-python -m scripts.search_documents "What does DTC code P10301 mean?"
+python -m scripts.search_documents "How to unlock the bike manually?"
 ```
 
 Results include a relevance score, source, location, and chunk text. The default score threshold is
